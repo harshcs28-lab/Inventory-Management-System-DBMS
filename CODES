@@ -1,0 +1,164 @@
+-- =====================================================
+-- INVENTORY MANAGEMENT SYSTEM
+-- DBMS MINI PROJECT
+-- =====================================================
+
+-- 1. CREATE DATABASE
+CREATE DATABASE InventoryDB;
+USE InventoryDB;
+
+-- =====================================================
+-- 2. CREATE TABLES
+-- =====================================================
+
+-- Table: Supplier
+CREATE TABLE Supplier (
+    Supplier_ID INT PRIMARY KEY,
+    Supplier_Name VARCHAR(50) NOT NULL,
+    Phone VARCHAR(15),
+    Email VARCHAR(50),
+    Address VARCHAR(100)
+);
+
+-- Table: Product
+CREATE TABLE Product (
+    Product_ID INT PRIMARY KEY,
+    Product_Name VARCHAR(50) NOT NULL,
+    Category VARCHAR(50),
+    Price DECIMAL(10,2),
+    Supplier_ID INT,
+    FOREIGN KEY (Supplier_ID) REFERENCES Supplier(Supplier_ID)
+);
+
+-- Table: Customer
+CREATE TABLE Customer (
+    Customer_ID INT PRIMARY KEY,
+    Customer_Name VARCHAR(50) NOT NULL,
+    Product_ID INT,
+    Phone VARCHAR(15),
+    Address VARCHAR(100),
+    FOREIGN KEY (Product_ID) REFERENCES Product(Product_ID)
+);
+
+-- Table: Orders
+CREATE TABLE Orders (
+    Order_ID INT PRIMARY KEY,
+    Order_Date DATE,
+    Quantity INT,
+    Product_ID INT,
+    Customer_ID INT,
+    FOREIGN KEY (Product_ID) REFERENCES Product(Product_ID),
+    FOREIGN KEY (Customer_ID) REFERENCES Customer(Customer_ID)
+);
+
+-- Table: Inventory
+CREATE TABLE Inventory (
+    Inventory_ID INT PRIMARY KEY,
+    Product_ID INT UNIQUE,
+    Stock_Quantity INT,
+    Reorder_Level INT,
+    Last_Updated DATE,
+    FOREIGN KEY (Product_ID) REFERENCES Product(Product_ID)
+);
+
+-- =====================================================
+-- 3. INSERT SAMPLE DATA
+-- =====================================================
+
+-- Insert into Supplier
+INSERT INTO Supplier VALUES
+(1, 'ABC Traders', '9876543210', 'abc@gmail.com', 'Delhi'),
+(2, 'Global Supplies', '9123456780', 'global@gmail.com', 'Mumbai');
+
+-- Insert into Product
+INSERT INTO Product VALUES
+(101, 'Laptop', 'Electronics', 50000, 1),
+(102, 'Mobile', 'Electronics', 20000, 1),
+(103, 'Chair', 'Furniture', 3000, 2);
+
+-- Insert into Customer
+INSERT INTO Customer VALUES
+(1, 'Rahul Sharma', 101, '9000000001', 'Delhi'),
+(2, 'Priya Singh', 102, '9000000002', 'Mumbai');
+
+-- Insert into Orders
+INSERT INTO Orders VALUES
+(1, '2026-02-20', 2, 101, 1),
+(2, '2026-02-21', 1, 103, 2);
+
+-- Insert into Inventory
+INSERT INTO Inventory VALUES
+(1, 101, 20, 5, '2026-02-20'),
+(2, 102, 30, 10, '2026-02-20'),
+(3, 103, 50, 15, '2026-02-20');
+
+-- =====================================================
+-- 4. BASIC QUERIES
+-- =====================================================
+
+-- Query 1: View all suppliers
+SELECT * FROM Supplier;
+
+-- Query 2: View all products
+SELECT * FROM Product;
+
+-- Query 3: View products with supplier name
+SELECT Product.Product_Name,
+       Product.Category,
+       Product.Price,
+       Supplier.Supplier_Name
+FROM Product
+JOIN Supplier ON Product.Supplier_ID = Supplier.Supplier_ID;
+
+-- Query 4: View all customers
+SELECT * FROM Customer;
+
+-- Query 5: View complete order details
+SELECT Orders.Order_ID,
+       Customer.Customer_Name,
+       Product.Product_Name,
+       Orders.Quantity,
+       Orders.Order_Date
+FROM Orders
+JOIN Customer ON Orders.Customer_ID = Customer.Customer_ID
+JOIN Product ON Orders.Product_ID = Product.Product_ID;
+
+-- Query 6: Products with price greater than 10000
+SELECT Product_Name, Price
+FROM Product
+WHERE Price > 10000;
+
+-- Query 7: Current stock status
+SELECT Product.Product_Name,
+       Inventory.Stock_Quantity
+FROM Inventory
+JOIN Product ON Inventory.Product_ID = Product.Product_ID;
+
+-- Query 8: Low stock alert
+SELECT Product.Product_Name,
+       Inventory.Stock_Quantity,
+       Inventory.Reorder_Level
+FROM Inventory
+JOIN Product ON Inventory.Product_ID = Product.Product_ID
+WHERE Inventory.Stock_Quantity < Inventory.Reorder_Level;
+
+-- Query 9: Total stock available
+SELECT SUM(Stock_Quantity) AS Total_Stock
+FROM Inventory;
+
+-- Query 10: Total quantity sold per product
+SELECT Product.Product_Name,
+       SUM(Orders.Quantity) AS Total_Quantity_Sold
+FROM Orders
+JOIN Product ON Orders.Product_ID = Product.Product_ID
+GROUP BY Product.Product_Name;
+
+-- Query 11: Total revenue generated
+SELECT SUM(Orders.Quantity * Product.Price) AS Total_Revenue
+FROM Orders
+JOIN Product ON Orders.Product_ID = Product.Product_ID;
+
+-- Query 12: Products above average price
+SELECT Product_Name, Price
+FROM Product
+WHERE Price > (SELECT AVG(Price) FROM Product);
